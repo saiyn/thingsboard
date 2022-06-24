@@ -66,6 +66,9 @@ RUN chown -R ${pkg.user}:${pkg.user} /var/run/postgresql
 RUN mkdir -p /data
 RUN chown -R ${pkg.user}:${pkg.user} /data
 
+RUN mkdir -p /usr/share/thingsboard/extensions
+RUN chown -R ${pkg.user}:${pkg.user} /usr/share/thingsboard/extensions
+
 RUN chown -R ${pkg.user}:${pkg.user} /var/log/${pkg.name}
 RUN chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar
 

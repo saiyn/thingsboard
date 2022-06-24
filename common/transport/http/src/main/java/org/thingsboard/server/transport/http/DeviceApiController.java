@@ -63,6 +63,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcResponseM
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
@@ -209,6 +210,30 @@ public class DeviceApiController implements TbTransportService {
                 }));
         return responseWriter;
     }
+
+    @ApiOperation(value = "Post time-series bulk data",
+    		notes = "Post time-series bulk data on behalf of device.",
+		produces = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequestMapping(value = "/{deviceToken}/bulktelemetry", method = RequestMethod.POST)
+    public DeferredResult<ResponseEntity> postTelemtry(
+		@ApiParam(value = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, defaultValue = "YOUR_DEVICE_ACCESS_TOKEN")
+	    	@PathVariable("deviceToken") String deviceToken,
+		@RequestParam(value = "filed1", required = false) MultipartFile file){
+
+	DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
+	transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+			new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+				TransportService transportService = transportContext.getTransportService();
+				transportService.process(sessionInfo, file, new HttpOkCallback(responseWriter));	
+
+			}));
+
+		return responseWriter;	
+	}	
+
+
+
+
 
     @ApiOperation(value = "Save claiming information (claimDevice)",
             notes = "Saves the information required for user to claim the device. " +

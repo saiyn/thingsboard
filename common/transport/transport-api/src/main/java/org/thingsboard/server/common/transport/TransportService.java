@@ -57,6 +57,8 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MC
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -94,6 +96,9 @@ public interface TransportService {
                  TransportServiceCallback<ProvisionDeviceResponseMsg> callback);
 
     void onProfileUpdate(DeviceProfile deviceProfile);
+
+    
+    void process(TransportProtos.SessionInfoProto sessionInfo, MultipartFile telemetryFile, TransportServiceCallback<Void> callback);
 
     void process(LwM2MRequestMsg msg,
                  TransportServiceCallback<LwM2MResponseMsg> callback);

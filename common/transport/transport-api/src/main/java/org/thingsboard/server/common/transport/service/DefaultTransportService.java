@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -93,6 +94,8 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.usagestats.TbApiUsageClient;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbTransportComponent;
+import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -114,6 +117,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+
+
 
 /**
  * Created by ashvayka on 17.10.18.
@@ -533,6 +541,10 @@ public class DefaultTransportService implements TransportService {
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, TransportServiceCallback<Void> callback) {
         int dataPoints = 0;
+
+	log.info("process one converted bulk msg: {}", msg);
+
+
         for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
             dataPoints += tsKv.getKvCount();
         }
@@ -548,9 +560,31 @@ public class DefaultTransportService implements TransportService {
                 metaData.putValue("deviceType", sessionInfo.getDeviceType());
                 metaData.putValue("ts", tsKv.getTs() + "");
                 JsonObject json = JsonUtils.getJsonObject(tsKv.getKvList());
+
+		log.info("send msg:{} to ruleEngine", json);
+
                 sendToRuleEngine(tenantId, deviceId, customerId, sessionInfo, json, metaData, SessionMsgType.POST_TELEMETRY_REQUEST, packCallback);
             }
         }
+    }
+
+    @Override
+    public void process(TransportProtos.SessionInfoProto sessionInfo, MultipartFile telemetryFile, TransportServiceCallback<Void> callback){
+	try(BufferedReader reader = new BufferedReader(new InputStreamReader(telemetryFile.getInputStream()))){
+		while(reader.ready()){
+			String json = reader.readLine();
+
+			log.info("process one bulk line:{}", json);
+
+			process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(json)), callback);
+
+		}
+
+	}catch(IOException e){
+		log.warn("fail to parse telemetry file.", e);
+	}
+
+
     }
 
     @Override
