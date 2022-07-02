@@ -574,6 +574,11 @@ public class DefaultTransportService implements TransportService {
 		while(reader.ready()){
 			String json = reader.readLine();
 
+            if(json == null) {
+                log.info("process telemetry file done");
+                break;
+            }
+
 			log.info("process one bulk line:{}", json);
 
 			process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(json)), callback);
