@@ -542,7 +542,7 @@ public class DefaultTransportService implements TransportService {
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.PostTelemetryMsg msg, TransportServiceCallback<Void> callback) {
         int dataPoints = 0;
 
-	log.info("process one converted bulk msg: {}", msg);
+	log.info("process one  msg: {}", msg);
 
 
         for (TransportProtos.TsKvListProto tsKv : msg.getTsKvListList()) {
